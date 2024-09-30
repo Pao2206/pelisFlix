@@ -29,20 +29,36 @@ export const styles = StyleSheet.create({
         marginHorizontal: 25,
         marginVertical: 50
     },
-    headerHome:{
+    header:{
         flexDirection: "row",
         gap: 15,
         alignItems: "center"
     },
-    iconProfile:{
+    icon:{
         alignItems: 'flex-end',
         flex: 1
     },
-    modalProfile:{
+    modal:{
         padding: 20,
         marginHorizontal: 20,
         backgroundColor: '#fff',
         borderRadius: 12,
         gap: 10
+    },
+    rootListMovies:{
+        marginTop: 10,
+        flexDirection: "row",
+        padding: 10,
+        alignItems: "center",
+        gap: 20
+    },
+    fabMovie:{
+        position:'absolute',
+        bottom: 20,
+        right: 15
+    },
+    rootsInputMovie:{
+        flexDirection: 'row', 
+        gap:35
     }
 });
