@@ -11,7 +11,7 @@ import {
   TextInput,
 } from "react-native-paper";
 import { styles } from "../../../theme/styles";
-import { dbRealtime } from "../../../config/firebaseConfig";
+import { auth, dbRealtime } from "../../../config/firebaseConfig";
 import { push, ref, set } from "firebase/database";
 
 //interfcae - Props (propiedades de comp padre a hijo)
@@ -72,7 +72,7 @@ export const NewMovieComponent = ({showModalMovie, setShowModalMovie}: Props) =>
       return;
     }
     //crear tabla en la BD
-    const dbRef = ref(dbRealtime, 'movies');
+    const dbRef = ref(dbRealtime, 'movies/' + auth.currentUser?.uid);
     //crear una coleccioin que agregue los datos a la BD
     const saveMovie = push(dbRef);
     //almacenar los datos en la BD
@@ -150,4 +150,4 @@ export const NewMovieComponent = ({showModalMovie, setShowModalMovie}: Props) =>
     </Snackbar>
   </>
   );
-};
+}; 

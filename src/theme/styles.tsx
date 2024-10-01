@@ -60,5 +60,15 @@ export const styles = StyleSheet.create({
     rootsInputMovie:{
         flexDirection: 'row', 
         gap:35
+    },
+    rootDetails:{
+        flex: 1,
+        padding: 20,
+        backgroundColor: '#fff',
+        gap: 20
+    },
+    iconLogOut:{
+        marginTop:25,
+        alignItems: 'center'
     }
 });

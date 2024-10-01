@@ -12,11 +12,13 @@ import {
   TextInput,
 } from "react-native-paper";
 import { styles } from "../../theme/styles";
-import { updateProfile } from "firebase/auth";
-import { auth } from "../../config/firebaseConfig";
+import { signOut, updateProfile } from "firebase/auth";
+import { auth, dbRealtime } from "../../config/firebaseConfig";
 import firebase from "firebase/auth";
 import { MovieCardComponent } from "./components/MovieCardComponent";
 import { NewMovieComponent } from "./components/NewMovieComponent";
+import { onValue, ref } from "firebase/database";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
 //interface usuario autenticado
 interface FormUser {
@@ -24,7 +26,7 @@ interface FormUser {
 }
 
 //interface lista productos
-interface Movies {
+export interface Movies {
   id: string;
   code: string;
   movieTitle: string;
@@ -33,6 +35,11 @@ interface Movies {
   stock: number;
 }
 export const HomeScreen = () => {
+
+  //HOOK USENAVIGATION: navegar de un screen a otro
+  const navigation = useNavigation();
+
+
   //HOOK USESTATE: Cambiar el estado del formulario
   const [formUser, setFormUser] = useState<FormUser>({
     name: "",
@@ -42,24 +49,7 @@ export const HomeScreen = () => {
   const [userData, setUserData] = useState<firebase.User | null>(null);
 
   //HOOK USESTATE: gestionar lista de peliculas
-  const [movies, setMovies] = useState<Movies[]>([
-    {
-      id: "1",
-      code: "HP1",
-      movieTitle: "Harry Potter and the Philosophers Stone",
-      description: "Fantasy",
-      price: 10,
-      stock: 10,
-    },
-    {
-      id: "2",
-      code: "HP2",
-      movieTitle: "Harry Potter and the Chamber of Secrets",
-      description: "Fantasy",
-      price: 10,
-      stock: 10,
-    },
-  ]);
+  const [movies, setMovies] = useState<Movies[]>([]);
 
   //HOOK USESTATE: Permitir que el modal se visualize o no (perfil)
   const [showModalProfile, setShowModalProfile] = useState<boolean>(false);
@@ -72,6 +62,8 @@ export const HomeScreen = () => {
     //cambiar de null a la data del user auth
     setUserData(auth.currentUser); //obtener informacion user autenticado
     setFormUser({ name: userData?.displayName ?? "" });
+    //llamar a la funcion para listar datos
+    getAllMovies();
   }, []);
 
   //FUNCION: actualizar info del formulario
@@ -89,6 +81,42 @@ export const HomeScreen = () => {
     //ocultar modal
     setShowModalProfile(false);
   };
+
+  //FUNCION: Obtener productos para listar
+  const getAllMovies = () => {
+    //direccionar a la tabla de la BD
+    const dbRef = ref(dbRealtime, "movies/" + auth.currentUser?.uid);
+    //obtener todos los datos de la BD
+    onValue(dbRef, (snapshot) => {
+      // capturar los datos
+      const data = snapshot.val(); //obtener los datos en un formato esperado
+      //validar que hay datos
+      if (!data) return;
+      //obtener las keys de cada valor
+      const getKeys = Object.keys(data);
+      //arreglo para almacenar los datos
+      const listMovies: Movies[] = [];
+      //recorrer las keys para acceder a los datos
+      getKeys.forEach((key) => {
+        const vallue = { ...data[key], id: key };
+        listMovies.push(vallue);
+      });
+      //actualizar los datos obtenidos en el hook usestate setMovies
+      setMovies(listMovies);
+    });
+  };
+
+  //FUNCION: Cerrar sesion
+  const handleSignOut = async () => {
+    try{
+     await signOut(auth);
+    //Resetear rutas
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{name:'Login'}] }));
+      setShowModalProfile(false);
+    }catch(e){
+      console.log(e);
+    }
+  }
 
   return (
     <>
@@ -111,7 +139,7 @@ export const HomeScreen = () => {
         <View>
           <FlatList
             data={movies}
-            renderItem={({ item }) => <MovieCardComponent />}
+            renderItem={({ item }) => <MovieCardComponent movies={item} />}
             keyExtractor={(item) => item.id}
           />
         </View>
@@ -128,7 +156,7 @@ export const HomeScreen = () => {
               />
             </View>
           </View>
-          <Divider/>
+          <Divider />
           <TextInput
             mode="outlined"
             label="Nombre"
@@ -141,12 +169,17 @@ export const HomeScreen = () => {
             disabled
             value={userData?.email!}
           />
-          <Button
-            mode="contained"
-            onPress={handleUpdateUser}
-          >
+          <Button mode="contained" onPress={handleUpdateUser}>
             Actualizar
           </Button>
+          <View style={styles.iconLogOut}>
+          <IconButton
+            icon="logout"
+            size={30}
+            mode="contained"
+            onPress={handleSignOut}
+          />
+          </View>
         </Modal>
       </Portal>
       <FAB
@@ -154,7 +187,10 @@ export const HomeScreen = () => {
         style={styles.fabMovie}
         onPress={() => setShowModalMovie(true)}
       />
-      <NewMovieComponent showModalMovie={showModalMovie} setShowModalMovie={setShowModalMovie}/>
+      <NewMovieComponent
+        showModalMovie={showModalMovie}
+        setShowModalMovie={setShowModalMovie}
+      />
     </>
   );
 };

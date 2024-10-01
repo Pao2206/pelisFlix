@@ -61,6 +61,7 @@ export const LoginScreen = () => {
         formLogin.email,
         formLogin.password
       );
+      navigation.dispatch(CommonActions.navigate({ name: "Home" }));
       //console.log(response);
     } catch (e) {
       console.log(e);
